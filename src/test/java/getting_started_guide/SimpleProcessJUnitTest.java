@@ -2,15 +2,8 @@ package getting_started_guide;
 
 import static org.junit.Assert.*;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.Authenticator;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.PasswordAuthentication;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,7 +18,6 @@ import org.junit.Test;
 import org.kie.api.KieServices;
 import org.kie.api.command.BatchExecutionCommand;
 import org.kie.api.runtime.ExecutionResults;
-import org.kie.api.runtime.KieContainer;
 import org.kie.server.api.model.KieContainerResource;
 import org.kie.server.api.model.ServiceResponse;
 import org.kie.server.api.model.ServiceResponse.ResponseType;
@@ -38,10 +30,6 @@ import utils.AbstractJUnitTest;
 
 import org.kie.server.api.model.ReleaseId;
 
-import org.kie.server.client.KieServicesClient;
-import org.kie.server.client.KieServicesConfiguration;
-import org.kie.server.client.KieServicesFactory;
-
 
 public class SimpleProcessJUnitTest extends AbstractJUnitTest {
 	
@@ -49,7 +37,7 @@ public class SimpleProcessJUnitTest extends AbstractJUnitTest {
 		super();
 	}
 	
-	@Test
+	@Before
 	public void Init() throws IOException{
 		//declare post request flags
 		Map<String,String> flags = new HashMap<String,String>();
@@ -59,21 +47,20 @@ public class SimpleProcessJUnitTest extends AbstractJUnitTest {
 		//Clone the repository
 		assertTrue(cloneRepository(flags).equals("APPROVED"));
 		
+		//build and deploy
 		String repoName = "clonedRepository";
 		String projectName = "myProject";
 		
-		//build and deploy
 		setClientURL("repositories/"+repoName+"/projects/"+projectName+"/maven/deploy");
 		String response = client.PostRequest(null, flags);
 		System.out.println(response);
 		
-		//TODO:test BUILD & DEPLOY
-		//TODO:create container
-		//TODO:actual tests
-		//TODO:cleanup()
+		//create a container
+		createContainer();
+
 	}
 	
-	//@Test
+	@Test
 	public void simpleProcessTest() {
 
 		Person p1 = new Person();
@@ -115,31 +102,22 @@ public class SimpleProcessJUnitTest extends AbstractJUnitTest {
 	    assertEquals("SUCCESS", response.getType().toString());		
 	}
 	
-	//@Test
-//	public void createContainer(){
-//		KieServicesConfiguration config =  KieServicesFactory.newRestConfiguration("http://localhost:8080/kie-server/services/rest/server",
-//		        user,
-//		        password);
-//		KieServicesClient client = KieServicesFactory.newKieServicesClient(config);
-//
-//		List<KieContainerResource> kieContainers = client.listContainers().getResult().getContainers();
-//		if (kieContainers.size() == 0) {  
-//	        System.out.println("No containers available...");  
-//	        return;  
-//	    }
-//		
-//		for(KieContainerResource i : kieContainers){
-//			System.out.println(i.getContainerId()+":"+i.getReleaseId()+";"+i.getStatus());
-//		}
+
+	private void createContainer(){
+		KieServicesConfiguration config =  KieServicesFactory.newRestConfiguration("http://localhost:8080/kie-server/services/rest/server",
+		        client.getUser(),
+		        client.getPasword());
+		KieServicesClient client = KieServicesFactory.newKieServicesClient(config);
 		
-//		ServiceResponse<KieContainerResource> createResponse = client.createContainer("myJavaContainer",  new KieContainerResource( new ReleaseId("org.brms","MyProject","1.0.3") ));
-//		if(createResponse.getType() == ResponseType.FAILURE) {  
-//	        System.out.println("Error creating myJavaContainer: ");
-//	        System.out.println(createResponse.getMsg());
-//	        return;  
-//	    }  
-//	     System.out.println("Container recreated with success!");  
-//	}
+		ServiceResponse<KieContainerResource> createResponse = client.createContainer("myJavaContainer",  new KieContainerResource( new ReleaseId("org.brms","MyProject","1.0.3") ));
+		if(createResponse.getType() == ResponseType.FAILURE) {  
+	        System.out.println("Error creating myJavaContainer: ");
+	        System.out.println(createResponse.getMsg());
+	        fail();
+	        return;  
+	    }  
+	     System.out.println("Container recreated with success!");
+	}
 	
 	private String cloneRepository(Map<String,String>flags){
 		setClientURL("repositories/");	
