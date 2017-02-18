@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.brms.myproject.Person;
 import org.drools.core.command.impl.GenericCommand;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.kie.api.KieServices;
@@ -39,12 +40,12 @@ public class SimpleProcessJUnitTest extends AbstractJUnitTest {
 	
 	@Before
 	public void Init() throws IOException{
-		//declare post request flags
+		//Declare POST request flags
 		Map<String,String> flags = new HashMap<String,String>();
 		flags.put("Accept", "application/json");
 		flags.put("Content-Type", "application/json");
 		
-		//Clone the repository
+		//Clone the BRMS repo
 		assertTrue(cloneRepository(flags).equals("APPROVED"));
 		
 		//build and deploy
@@ -116,7 +117,7 @@ public class SimpleProcessJUnitTest extends AbstractJUnitTest {
 	        fail();
 	        return;  
 	    }  
-	     System.out.println("Container recreated with success!");
+	     System.out.println("Container created with success!");
 	}
 	
 	private String cloneRepository(Map<String,String>flags){
@@ -129,12 +130,23 @@ public class SimpleProcessJUnitTest extends AbstractJUnitTest {
 			response = client.PostRequest(json, flags);
 		} catch (IOException e) {
 			e.printStackTrace();
-			fail();
+			//fail();
 		}
 		resetClientURL();
 		String returnCode = response.split(",")[1].split(":")[1];
 		returnCode = returnCode.substring(1, returnCode.length() - 1);
 		return returnCode;
 		
+	}
+	
+	@After
+	public void teardown(){
+		
+		//Destroy the container
+		KieServicesConfiguration config =  KieServicesFactory.newRestConfiguration("http://localhost:8080/kie-server/services/rest/server",
+		        client.getUser(),
+		        client.getPasword());
+		KieServicesClient client = KieServicesFactory.newKieServicesClient(config);
+		client.disposeContainer("myJavaContainer");
 	}
 }
